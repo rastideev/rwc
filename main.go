@@ -4,48 +4,64 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 )
 
 func main() {
 
-	byteCountPtr := flag.Bool("c", false, "Count the bytes of a file.")
+	byteCountPtr := flag.Bool("c", false, "Counts the bytes of a file.")
+	lineCountPtr := flag.Bool("l", false, "Counts the lines of a file.")
+	wordCountPtr := flag.Bool("w", false, "Counts the words of a file.")
 
 	flag.Parse()
 
 	filePath := flag.Args()[0]
 
-	if filePath == "" {
+	var input io.Reader
+
+	if filePath != "" {
+		file, err := os.Open(filePath)
+		if err != nil {
+			fmt.Println("rwc: error opening file: ", err)
+			os.Exit(1)
+		}
+
+		defer file.Close()
+
+		input = file
+	} else {
 		fmt.Println("fatal: file path is required")
 		os.Exit(1)
 	}
 
 	if *byteCountPtr {
-		byteCount := countBytes(filePath)
+		byteCount := countBySplit(input, bufio.ScanBytes)
 		fmt.Println(fmt.Sprintf("%v\t%v", byteCount, filePath))
 		return
 	}
 
-	fmt.Println("Value of count option:", *byteCountPtr)
-}
-
-func countBytes(filePath string) int {
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		fmt.Println("error opening file:", filePath, " err: ", err)
-		os.Exit(1)
+	if *lineCountPtr {
+		lineCount := countBySplit(input, bufio.ScanLines)
+		fmt.Println(fmt.Sprintf("%v\t%v", lineCount, filePath))
+		return
 	}
 
-	defer file.Close()
+	if *wordCountPtr {
+		wordCount := countBySplit(input, bufio.ScanWords)
+		fmt.Println(fmt.Sprintf("%v\t%v", wordCount, filePath))
+		return
+	}
+}
 
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanBytes)
+func countBySplit(input io.Reader, split bufio.SplitFunc) int {
+	scanner := bufio.NewScanner(input)
+	scanner.Split(split)
 
 	counter := 0
 
 	for scanner.Scan() {
-		counter += len(scanner.Bytes())
+		counter++
 	}
 
 	if err := scanner.Err(); err != nil {
