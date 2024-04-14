@@ -18,12 +18,14 @@ func main() {
 
 	flag.Parse()
 
-	filePath := flag.Args()[0]
+	filePath := ""
 	areFlagsSet := flag.NFlag() > 0
 
 	var input io.Reader
 
-	if filePath != "" {
+	if len(flag.Args()) > 0 {
+		filePath = flag.Args()[0]
+
 		file, err := os.Open(filePath)
 		if err != nil {
 			fmt.Println("rwc: error opening file: ", err)
@@ -34,8 +36,7 @@ func main() {
 
 		input = file
 	} else {
-		fmt.Println("fatal: file path is required")
-		os.Exit(1)
+		input = os.Stdin
 	}
 
 	lineCount, wordCount, charCount, byteCount := count(input)
