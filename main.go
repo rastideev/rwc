@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
+	"unicode"
 )
 
 func main() {
@@ -41,19 +41,19 @@ func main() {
 	lineCount, wordCount, charCount, byteCount := count(input)
 
 	if *lineCountPtr || !areFlagsSet {
-		fmt.Printf("%v\t", lineCount)
+		fmt.Printf("%v ", lineCount)
 	}
 
 	if *wordCountPtr || !areFlagsSet {
-		fmt.Printf("%v\t", wordCount)
+		fmt.Printf("%v ", wordCount)
 	}
 
 	if *byteCountPtr || !areFlagsSet {
-		fmt.Printf("%v\t", byteCount)
+		fmt.Printf("%v ", byteCount)
 	}
 
 	if *charCountPtr {
-		fmt.Printf("%v\t", charCount)
+		fmt.Printf("%v ", charCount)
 	}
 
 	fmt.Printf("%v\n", filePath)
@@ -68,7 +68,7 @@ func count(input io.Reader) (int, int, int, int) {
 		lineCount++
 		byteCount += len(scanner.Bytes()) + 2
 		charCount += len(scanner.Text()) + 2
-		wordCount += len(strings.Split(scanner.Text(), " "))
+		wordCount += countWordsIn(scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -76,4 +76,24 @@ func count(input io.Reader) (int, int, int, int) {
 	}
 
 	return lineCount, wordCount, charCount, byteCount
+}
+
+func countWordsIn(text string) int {
+	count := 0
+	runes := []rune(text)
+
+	if len(runes) > 0 && !unicode.IsSpace(runes[0]) {
+		count++
+	}
+
+	for idx, char := range runes {
+		if idx+1 >= len(runes) {
+			break
+		}
+		if unicode.IsSpace(char) && !unicode.IsSpace(runes[idx+1]) {
+			count++
+		}
+	}
+
+	return count
 }
